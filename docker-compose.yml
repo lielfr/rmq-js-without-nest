@@ -1,0 +1,35 @@
+version: "3.9"
+services:
+  rmq:
+    image: rabbitmq:management
+    ports:
+      - 15672:15672
+    env_file:
+      - ./.env.local
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+  producer:
+    depends_on:
+      rmq:
+        condition: service_healthy
+    build: 
+      context: ./producer
+    ports:
+      - 3000:3000
+    volumes:
+      - ./producer/src/:/app/src/
+    env_file:
+      - ./.env.local
+  consumer:
+    depends_on:
+      rmq:
+        condition: service_healthy
+    build: 
+      context: ./consumer
+    volumes:
+      - ./consumer/src/:/app/src/
+    env_file:
+      - ./.env.local
